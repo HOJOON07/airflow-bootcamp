@@ -39,9 +39,17 @@ def load(symbol, schema, table):
 
     try:
         cur.execute(f"USE SCHEMA {schema};")
-        cur.execute(f"""CREATE TABLE IF NOT EXISTS {table} (
-            date date, open float, close float, high float, low float, volume int, symbol varchar
-        )""")
+        cur.execute(
+            f"""CREATE TABLE IF NOT EXISTS {table} (
+            date date, 
+            open float, 
+            close float, 
+            high float, 
+            low float, 
+            volume int, 
+            symbol varchar
+        )"""
+        )
 
         cur.execute("BEGIN;")
         delete_sql = f"DELETE FROM {table}"
@@ -67,15 +75,17 @@ def load(symbol, schema, table):
 with DAG(
     dag_id='YfinanceToSnowflake_fullrefresh',
     description="Business Owner: xyz, Copy NVDA stock info to Snowflake",
-    start_date=datetime(2025,1,14),
+    start_date=datetime(2025, 1, 14),
     catchup=False,
     tags=['ETL', 'fullrefresh'],
     max_active_runs=1,
-    schedule = '30 1 * * *'
+    schedule='30 1 * * *',
 ) as dag:
 
     schema = "raw_data"
     table = "stock_price"
     symbol = "NVDA"
 
-    extract(symbol) >> load(file_path, symbol, schema, table)
+    file_path = extract(symbol)
+
+    extract(symbol) >> load(file_path, schema, table)
